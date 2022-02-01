@@ -10,7 +10,7 @@ Amazon DynamoDB Session Manager for Apache Tomcat
 Instance Metadata Service v2 Information
 -----------------
 The Maven dependency has been upgraded to include support for IMDSv2. This change
-are to remediate findings by AWS best practices and vulenerabilites reported with version 1.
+are to remediate findings by AWS best practices and vulnerabilities reported with version 1.
 
 This project has been updated to get the Instance Metadata Service v2 using [InstanceProfileCredentialsProvider](https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/InstanceProfileCredentialsProvider.html) 
 provided by the [DefaultAWSCredentialsProviderChain](https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html).
