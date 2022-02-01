@@ -16,17 +16,14 @@ package com.amazonaws.services.dynamodb.sessionmanager;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.auth.*;
 import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.services.dynamodb.sessionmanager.converters.SessionConverter;
 import com.amazonaws.services.dynamodb.sessionmanager.util.DynamoUtils;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.util.Tables;
+import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import com.amazonaws.util.StringUtils;
 
 import org.apache.catalina.LifecycleException;
@@ -222,9 +219,15 @@ public class DynamoDBSessionManager extends PersistentManagerBase {
     }
 
     private void initDynamoTable(AmazonDynamoDBClient dynamo) {
-        boolean tableExists = Tables.doesTableExist(dynamo, this.tableName);
+        boolean tableExists;
+        try {
+            TableUtils.waitUntilExists(dynamo, this.tableName, 1000, 500);
+            tableExists = true;
+        } catch (InterruptedException e) {
+            tableExists = false;
+        }
 
-        if (!tableExists && !createIfNotExist) {
+        if (!createIfNotExist && !tableExists) {
             throw new AmazonClientException("Session table '" + tableName + "' does not exist, "
                     + "and automatic table creation has been disabled in context.xml");
         }
@@ -233,7 +236,11 @@ public class DynamoDBSessionManager extends PersistentManagerBase {
             DynamoUtils.createSessionTable(dynamo, this.tableName, this.readCapacityUnits, this.writeCapacityUnits);
         }
 
-        Tables.waitForTableToBecomeActive(dynamo, this.tableName);
+        try {
+            TableUtils.waitUntilActive(dynamo, this.tableName);
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+        }
     }
 
     private DynamoSessionStorage createSessionStorage(AmazonDynamoDBClient dynamoClient) {
